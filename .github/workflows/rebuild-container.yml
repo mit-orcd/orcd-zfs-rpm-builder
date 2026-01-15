@@ -1,0 +1,31 @@
+name: Rebuild Container
+
+on:
+  push:
+    paths:
+      - 'definitions/rhel9.def'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Apptainer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget squashfs-tools
+          wget https://github.com/apptainer/apptainer/releases/download/v1.3.0/apptainer_1.3.0_amd64.deb
+          sudo dpkg -i apptainer_1.3.0_amd64.deb
+
+      - name: Build container
+        run: |
+          sudo apptainer build rhel9.sif definitions/rhel9.def
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-image
+          path: rhel9.sif

@@ -1,0 +1,55 @@
+name: Build OpenZFS RPMs
+
+on:
+  workflow_dispatch:
+    inputs:
+      zfs_version:
+        description: 'OpenZFS version to build (e.g., 2.2.8)'
+        required: true
+        default: '2.2.8'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Apptainer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget squashfs-tools
+          wget https://github.com/apptainer/apptainer/releases/download/v1.3.0/apptainer_1.3.0_amd64.deb
+          sudo dpkg -i apptainer_1.3.0_amd64.deb
+
+      - name: Download container if not built
+        uses: actions/download-artifact@v4
+        with:
+          name: container-image
+          path: .
+
+      - name: Ensure container exists
+        run: |
+          if [ ! -f rhel9.sif ]; then
+            sudo apptainer build rhel9.sif definitions/rhel9.def
+          fi
+
+      - name: Download ZFS source
+        run: |
+          wget https://github.com/openzfs/zfs/releases/download/zfs-${{ inputs.zfs_version }}/zfs-${{ inputs.zfs_version }}.tar.gz
+          tar -xzf zfs-${{ inputs.zfs_version }}.tar.gz
+
+      - name: Build RPMs in container
+        run: |
+          apptainer exec --writable-tmpfs rhel9.sif bash -c "
+            dnf install -y kernel-devel-$(uname -r) rpm-build make gcc autoconf automake libtool dkms libtirpc-devel libblkid-devel libuuid-devel libudev-devel openssl-devel zlib-devel libaio-devel libattr-devel elfutils-libelf-devel python3 python3-devel python3-setuptools python3-cffi libffi-devel ncompress lsscsi parted
+            cd /github/workspace/zfs-${{ inputs.zfs_version }}
+            ./configure --with-config=user
+            make -j$(nproc) rpm
+          "
+
+      - name: Upload RPM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zfs-rpms
+          path: zfs-${{ inputs.zfs_version }}/*.rpm
