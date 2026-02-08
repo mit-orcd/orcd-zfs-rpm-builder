@@ -10,10 +10,19 @@ on:
 
 jobs:
   build:
+    permissions:
+      id-token: write
+      contents: read
     runs-on: [self-hosted, orcd-stor-ec2]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
 
       - name: Install Apptainer
         run: |
