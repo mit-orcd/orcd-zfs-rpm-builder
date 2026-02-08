@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, orcd-stor-ec2]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,6 +24,7 @@ jobs:
 
       - name: Download container if not built
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: container-image
           path: .
@@ -41,9 +42,9 @@ jobs:
 
       - name: Build RPMs in container
         run: |
-          apptainer exec --writable-tmpfs rhel9.sif bash -c "
+          apptainer exec --writable-tmpfs --bind \"${GITHUB_WORKSPACE}:/workspace\" rhel9.sif bash -c "
             dnf install -y kernel-devel-$(uname -r) rpm-build make gcc autoconf automake libtool dkms libtirpc-devel libblkid-devel libuuid-devel libudev-devel openssl-devel zlib-devel libaio-devel libattr-devel elfutils-libelf-devel python3 python3-devel python3-setuptools python3-cffi libffi-devel ncompress lsscsi parted
-            cd /github/workspace/zfs-${{ inputs.zfs_version }}
+            cd /workspace/zfs-${{ inputs.zfs_version }}
             ./configure --with-config=user
             make -j$(nproc) rpm
           "
