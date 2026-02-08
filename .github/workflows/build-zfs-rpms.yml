@@ -13,7 +13,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    runs-on: [self-hosted, orcd-stor-ec2]
+    runs-on: [self-hosted, ORCD-StorEC2]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
