@@ -1,0 +1,32 @@
+name: Runner Smoke Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: [self-hosted, ORCD-StorEC2]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Runner smoke test
+        run: |
+          echo "Runner: $RUNNER_NAME"
+          echo "Labels: $RUNNER_LABELS"
+          uname -a
+          whoami
+          df -h
+
+      - name: Verify AWS identity
+        run: |
+          aws sts get-caller-identity
