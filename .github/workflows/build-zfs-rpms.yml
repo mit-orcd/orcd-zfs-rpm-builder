@@ -27,6 +27,7 @@ jobs:
       - name: Install Apptainer
         run: |
           sudo apt-get update
+          sudo apt-get -f install -y
           sudo apt-get install -y wget squashfs-tools uidmap fakeroot
           wget https://github.com/apptainer/apptainer/releases/download/v1.3.0/apptainer_1.3.0_amd64.deb
           sudo apt-get install -y ./apptainer_1.3.0_amd64.deb || sudo apt-get -f install -y
