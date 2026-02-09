@@ -35,6 +35,14 @@ jobs:
             echo "ZFS_VERSION=${{ inputs.zfs_version }}" >> "$GITHUB_ENV"
           fi
 
+      - name: Resolve release tag
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_TAG=v${{ inputs.zfs_version }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Install Apptainer
         run: |
           sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
@@ -74,7 +82,9 @@ jobs:
           path: zfs-${{ env.ZFS_VERSION }}/**/*.rpm
 
       - name: Create GitHub release
-        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
           files: zfs-${{ env.ZFS_VERSION }}/**/*.rpm
