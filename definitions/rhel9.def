@@ -6,6 +6,36 @@ From: registry.access.redhat.com/ubi9/ubi
 
 %post
     dnf update -y
-    dnf install -y dnf-utils
+    dnf install -y dnf-utils dnf-plugins-core
     dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+    dnf config-manager --set-enabled ubi-9-codeready-builder || true
+    dnf config-manager --set-enabled codeready-builder-for-rhel-9-x86_64-rpms || true
+
+    dnf -y groupinstall "Development Tools" || true
+    dnf install -y \
+        rpm-build \
+        gcc \
+        make \
+        autoconf \
+        automake \
+        libtool \
+        dkms \
+        libtirpc-devel \
+        libblkid-devel \
+        libuuid-devel \
+        libudev-devel \
+        openssl-devel \
+        zlib-devel \
+        libaio-devel \
+        libattr-devel \
+        elfutils-libelf-devel \
+        python3 \
+        python3-devel \
+        python3-setuptools \
+        python3-cffi \
+        libffi-devel \
+        ncompress \
+        lsscsi \
+        parted
+
     dnf clean all
