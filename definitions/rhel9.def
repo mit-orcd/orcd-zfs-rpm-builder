@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: registry.access.redhat.com/ubi9/ubi
+From: rockylinux:9
 
 %setup
     mkdir -p ${APPTAINER_ROOTFS}/shared
@@ -7,11 +7,10 @@ From: registry.access.redhat.com/ubi9/ubi
 %post
     dnf update -y
     dnf install -y dnf-utils dnf-plugins-core
+    dnf config-manager --set-enabled crb
     dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-    dnf config-manager --set-enabled ubi-9-codeready-builder || true
-    dnf config-manager --set-enabled codeready-builder-for-rhel-9-x86_64-rpms || true
 
-    dnf -y groupinstall "Development Tools" || true
+    dnf -y groupinstall "Development Tools"
     dnf install -y \
         rpm-build \
         gcc \
