@@ -27,6 +27,10 @@ jobs:
           whoami
           df -h
 
+      - name: Install AWS CLI
+        run: |
+          sudo dnf install -y awscli
+
       - name: Verify AWS identity
         run: |
           aws sts get-caller-identity
