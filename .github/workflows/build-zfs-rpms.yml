@@ -64,18 +64,15 @@ jobs:
             cd /workspace/zfs-${ZFS_VERSION}
             ./configure --with-config=user
             make -j$(nproc) rpm
+            mkdir -p /workspace/artifacts
+            shopt -s globstar nullglob
+            rpms=(/tmp/zfs-build-*/RPMS/**/*.rpm)
+            if [ ${#rpms[@]} -eq 0 ]; then
+              echo "No RPMs found under /tmp/zfs-build-*"
+              exit 1
+            fi
+            cp "${rpms[@]}" /workspace/artifacts/
           "
-
-      - name: Collect RPM artifacts
-        run: |
-          mkdir -p artifacts
-          shopt -s globstar nullglob
-          rpms=(/tmp/zfs-build-*/RPMS/**/*.rpm)
-          if [ ${#rpms[@]} -eq 0 ]; then
-            echo "No RPMs found under /tmp/zfs-build-*"
-            exit 1
-          fi
-          cp "${rpms[@]}" artifacts/
 
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
