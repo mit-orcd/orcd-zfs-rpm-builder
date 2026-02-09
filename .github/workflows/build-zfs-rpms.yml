@@ -66,14 +66,20 @@ jobs:
             make -j$(nproc) rpm
           "
 
+      - name: Collect RPM artifacts
+        run: |
+          mkdir -p artifacts
+          shopt -s globstar nullglob
+          cp /tmp/zfs-build-*/RPMS/**/*.rpm artifacts/
+
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
         with:
           name: zfs-rpms
-          path: zfs-${ZFS_VERSION}/*.rpm
+          path: artifacts/*.rpm
 
       - name: Create GitHub release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          files: zfs-${{ env.ZFS_VERSION }}/*.rpm
+          files: artifacts/*.rpm
