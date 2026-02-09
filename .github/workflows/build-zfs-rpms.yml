@@ -60,19 +60,20 @@ jobs:
 
       - name: Build RPMs in container
         run: |
-          apptainer exec --writable-tmpfs --fakeroot --bind "${GITHUB_WORKSPACE}:/workspace" rhel9.sif bash -c "
-            cd /workspace/zfs-${ZFS_VERSION}
-            ./configure --with-config=user
-            make -j$(nproc) rpm
-            mkdir -p /workspace/artifacts
-            shopt -s globstar nullglob
-            rpms=(/tmp/zfs-build-*/RPMS/**/*.rpm)
-            if [ ${#rpms[@]} -eq 0 ]; then
-              echo "No RPMs found under /tmp/zfs-build-*"
-              exit 1
-            fi
-            cp "${rpms[@]}" /workspace/artifacts/
-          "
+          apptainer exec --writable-tmpfs --fakeroot --bind "${GITHUB_WORKSPACE}:/workspace" rhel9.sif bash -c "$(cat <<'EOF'
+          cd /workspace/zfs-${ZFS_VERSION}
+          ./configure --with-config=user
+          make -j$(nproc) rpm
+          mkdir -p /workspace/artifacts
+          shopt -s globstar nullglob
+          rpms=(/tmp/zfs-build-*/RPMS/**/*.rpm)
+          if [ ${#rpms[@]} -eq 0 ]; then
+            echo "No RPMs found under /tmp/zfs-build-*"
+            exit 1
+          fi
+          cp "${rpms[@]}" /workspace/artifacts/
+          EOF
+          )"
 
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
