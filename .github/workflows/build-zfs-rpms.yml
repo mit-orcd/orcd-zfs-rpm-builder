@@ -1,6 +1,9 @@
 name: Build OpenZFS RPMs
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       zfs_version:
@@ -12,7 +15,7 @@ jobs:
   build:
     permissions:
       id-token: write
-      contents: read
+      contents: write
     runs-on: [self-hosted, ORCD-StorEC2]
     steps:
       - name: Checkout repository
@@ -23,6 +26,14 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
+
+      - name: Resolve ZFS version
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "ZFS_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          else
+            echo "ZFS_VERSION=${{ inputs.zfs_version }}" >> "$GITHUB_ENV"
+          fi
 
       - name: Install Apptainer
         run: |
@@ -44,13 +55,13 @@ jobs:
 
       - name: Download ZFS source
         run: |
-          wget https://github.com/openzfs/zfs/releases/download/zfs-${{ inputs.zfs_version }}/zfs-${{ inputs.zfs_version }}.tar.gz
-          tar -xzf zfs-${{ inputs.zfs_version }}.tar.gz
+          wget https://github.com/openzfs/zfs/releases/download/zfs-${ZFS_VERSION}/zfs-${ZFS_VERSION}.tar.gz
+          tar -xzf zfs-${ZFS_VERSION}.tar.gz
 
       - name: Build RPMs in container
         run: |
           apptainer exec --writable-tmpfs --fakeroot --bind "${GITHUB_WORKSPACE}:/workspace" rhel9.sif bash -c "
-            cd /workspace/zfs-${{ inputs.zfs_version }}
+            cd /workspace/zfs-${ZFS_VERSION}
             ./configure --with-config=user
             make -j$(nproc) rpm
           "
@@ -59,4 +70,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zfs-rpms
-          path: zfs-${{ inputs.zfs_version }}/*.rpm
+          path: zfs-${ZFS_VERSION}/*.rpm
+
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: zfs-${{ env.ZFS_VERSION }}/*.rpm
