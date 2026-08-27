@@ -5,6 +5,10 @@ From: rockylinux:9
     mkdir -p ${APPTAINER_ROOTFS}/shared
 
 %post
+    sed -i -e 's|^mirrorlist=|#mirrorlist=|' \
+           -e 's|^#\?baseurl=http[s]\?://dl.rockylinux.org|baseurl=https://dl.rockylinux.org|' \
+        /etc/yum.repos.d/rocky*.repo
+    dnf clean all
     dnf update -y
     dnf install -y dnf-utils dnf-plugins-core
     dnf config-manager --set-enabled crb
